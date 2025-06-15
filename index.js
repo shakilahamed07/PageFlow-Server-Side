@@ -43,6 +43,17 @@ async function run() {
       res.send(result);
     })
 
+    //* Update
+    app.put('/book-update/:id', async (req,res)=>{
+      const filter = {_id: new ObjectId(req.params.id)}
+      const updateBook = req.body;
+      const updateDoc ={
+        $set: updateBook
+      }
+      const result = await collectionBooks.updateOne(filter, updateDoc, {upsert: true})
+      res.send(result)
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
