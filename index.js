@@ -24,6 +24,12 @@ async function run() {
     await client.connect();
     const collectionBooks = client.db('PageFlow').collection('books');
 
+    //* Read book
+    app.get('/books', async (req,res)=>{
+      const result = await collectionBooks.find().toArray()
+      res.send(result)
+    })
+
     //* Add Book
     app.post('/add-book', async (req,res)=>{
       const newBook = req.body;
