@@ -22,10 +22,14 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    const collectionDB = client.db('DB').collection('posts');
+    const collectionBooks = client.db('PageFlow').collection('books');
 
-    
-
+    //* Add Book
+    app.post('/add-book', async (req,res)=>{
+      const newBook = req.body;
+      const result = await collectionBooks.insertOne(newBook);
+      res.send(result);
+    })
 
 
     // Send a ping to confirm a successful connection
