@@ -29,10 +29,19 @@ async function run() {
       const result = await collectionBooks.find().toArray()
       res.send(result)
     })
-
+    
+    // single book
     app.get('/books/:id', async (req,res)=>{
       const query = {_id: new ObjectId(req.params.id)}
       const result = await collectionBooks.findOne(query)
+      res.send(result)
+    })
+
+    // category
+    app.get('/categories/:id', async(req,res)=>{
+      const categoryName = req.params.id;
+      const query = {category: categoryName}
+      const result = await collectionBooks.find(query).toArray();
       res.send(result)
     })
 
