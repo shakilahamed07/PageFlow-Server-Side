@@ -30,6 +30,12 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/books/:id', async (req,res)=>{
+      const query = {_id: new ObjectId(req.params.id)}
+      const result = await collectionBooks.findOne(query)
+      res.send(result)
+    })
+
     //* Add Book
     app.post('/add-book', async (req,res)=>{
       const newBook = req.body;
