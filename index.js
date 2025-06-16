@@ -48,6 +48,14 @@ async function run() {
       res.send(result)
     })
 
+    // my borrow books
+    app.get('/borrow/:email', async (req,res)=>{
+      const email = req.params.email;
+      const query = {email: email}
+      const result = await collectionBorrow.find(query).toArray()
+      res.send(result)
+    })
+
     //* Add Book
     app.post('/add-book', async (req,res)=>{
       const newBook = req.body;
@@ -59,7 +67,7 @@ async function run() {
     app.post('/add-borrow/:id', async (req,res)=>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
-      const i = await collectionBooks.updateOne(query, {$inc:{quantity: -1}})
+      const updateQuantity = await collectionBooks.updateOne(query, {$inc:{quantity: -1}})
 
       const borrowData = req.body;
       const result = await collectionBorrow.insertOne(borrowData);
@@ -77,6 +85,17 @@ async function run() {
       res.send(result)
     })
 
+    //* Delete 
+    app.delete('/borrow/:id', async (req, res)=>{
+      const id = req.params.id;
+      const query1 = {id};
+      const query2 = {_id: new ObjectId(id)};
+      console.log(query1, query2)
+      const updateQuantity = await collectionBooks.updateOne(query2, {$inc:{quantity: +1}})
+
+      const result = await collectionBorrow.deleteOne(query1);
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
