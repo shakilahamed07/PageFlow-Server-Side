@@ -10,6 +10,8 @@ app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASS}@cluster1.buifi4j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1`;
 
+// const uri = "mongodb://127.0.0.1:27017"; //* Local DataBase
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -23,6 +25,7 @@ async function run() {
   try {
     await client.connect();
     const collectionBooks = client.db('PageFlow').collection('books');
+    const collectionBorrow = client.db('PageFlow').collection('borrow');
 
     //* Read book
     app.get('/books', async (req,res)=>{
@@ -49,6 +52,17 @@ async function run() {
     app.post('/add-book', async (req,res)=>{
       const newBook = req.body;
       const result = await collectionBooks.insertOne(newBook);
+      res.send(result);
+    })
+
+    //* Add Borrow Data
+    app.post('/add-borrow/:id', async (req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const i = await collectionBooks.updateOne(query, {$inc:{quantity: -1}})
+
+      const borrowData = req.body;
+      const result = await collectionBorrow.insertOne(borrowData);
       res.send(result);
     })
 
