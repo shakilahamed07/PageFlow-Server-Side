@@ -1,16 +1,53 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const prot = process.env.prot || 5000;
 const cors = require("cors");
-require("dotenv").config();
+const admin = require("firebase-admin");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
+//* middleware
 app.use(cors());
 app.use(express.json());
 
+//* Firebase initialize
+const firebaseKey = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
+const serviceAccount = JSON.parse(firebaseKey)
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+//* Firebase token verify
+const VerifyFirebaseToken = async (req, res, next) =>{
+  const authHeder = req.headers?.authorization;
+
+  if (!authHeder || !authHeder.startsWith("Bearer")) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+
+  const token = authHeder.split(' ')[1]
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.decodedEmail = decoded.email;
+    next()
+  } 
+  catch (error) {
+    return res.status(401).send('Unauthorized access')
+  }
+}
+
+//* email verify
+const emailVerify = (req,res,next)=>{
+  if(req.headers.email !== req.decodedEmail){
+    return res.status(403).send({ message: "forbidden access" });
+  }
+  next()
+}
+
+
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASS}@cluster1.buifi4j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1`;
 
-// const uri = "mongodb://127.0.0.1:27017"; //* Local DataBase
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -28,13 +65,13 @@ async function run() {
     const collectionBorrow = client.db("PageFlow").collection("borrow");
 
     //* Read book
-    app.get("/books", async (req, res) => {
+    app.get("/books", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const result = await collectionBooks.find().toArray();
       res.send(result);
     });
 
     // single book
-    app.get("/books/:id", async (req, res) => {
+    app.get("/books/:id", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await collectionBooks.findOne(query);
       res.send(result);
@@ -49,7 +86,7 @@ async function run() {
     });
 
     // my borrow books
-    app.get("/borrow/:email", async (req, res) => {
+    app.get("/borrow/:email", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await collectionBorrow.find(query).toArray();
@@ -57,14 +94,14 @@ async function run() {
     });
 
     //* Add Book
-    app.post("/add-book", async (req, res) => {
+    app.post("/add-book", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const newBook = req.body;
       const result = await collectionBooks.insertOne(newBook);
       res.send(result);
     });
 
     //* Add Borrow Data
-    app.post("/add-borrow/:id", async (req, res) => {
+    app.post("/add-borrow/:id", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const { email } = req.body;
@@ -92,7 +129,7 @@ async function run() {
     });
 
     //* Update
-    app.put("/book-update/:id", async (req, res) => {
+    app.put("/book-update/:id", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const filter = { _id: new ObjectId(req.params.id) };
       const updateBook = req.body;
       const updateDoc = {
@@ -105,7 +142,7 @@ async function run() {
     });
 
     //* Delete
-    app.delete("/borrow/:id", async (req, res) => {
+    app.delete("/borrow/:id", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await collectionBorrow.deleteOne(query);
@@ -113,7 +150,7 @@ async function run() {
     });
 
     // patch 
-    app.patch("/borrow/:id", async (req, res) => {
+    app.patch("/borrow/:id", VerifyFirebaseToken, emailVerify, async (req, res) => {
       const id = req.params.id;
       const {email} = req.body;
       const query = { _id: new ObjectId(id) };
