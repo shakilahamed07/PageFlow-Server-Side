@@ -107,14 +107,8 @@ async function run() {
     //* Delete
     app.delete("/borrow/:id", async (req, res) => {
       const id = req.params.id;
-      const query1 = { id };
-      const query2 = { _id: new ObjectId(id) };
-      console.log(query1, query2);
-      const updateQuantity = await collectionBooks.updateOne(query2, {
-        $inc: { quantity: +1 },
-      });
-
-      const result = await collectionBorrow.deleteOne(query1);
+      const query = { _id: new ObjectId(id) };
+      const result = await collectionBorrow.deleteOne(query);
       res.send(result);
     });
 
@@ -123,6 +117,10 @@ async function run() {
       const id = req.params.id;
       const {email} = req.body;
       const query = { _id: new ObjectId(id) };
+
+      const updateQuantity = await collectionBooks.updateOne(query, {
+        $inc: { quantity: +1 },
+      });
 
       const Book = await collectionBooks.findOne(query);
       const alreadyBorrow = Book.borrowList.includes(email);
