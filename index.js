@@ -65,13 +65,18 @@ async function run() {
     const collectionBorrow = client.db("PageFlow").collection("borrow");
 
     //* Read book
-    app.get("/books", VerifyFirebaseToken, emailVerify, async (req, res) => {
-      const result = await collectionBooks.find().toArray();
+    app.get("/books", async (req, res) => {
+      let query = {} 
+      const value = req.query.filter;
+      if(value == 1 || value == -1 ){
+        query.rating = value
+      }
+      const result = await collectionBooks.find().sort(query).toArray();
       res.send(result);
     });
 
     // single book
-    app.get("/books/:id", VerifyFirebaseToken, emailVerify, async (req, res) => {
+    app.get("/books/:id", async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
       const result = await collectionBooks.findOne(query);
       res.send(result);
