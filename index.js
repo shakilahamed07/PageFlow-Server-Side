@@ -183,7 +183,7 @@ async function run() {
 
     //& contact us
     app.post("/contact", async (req, res) => {
-      
+      const { name, email, phone, message } = req.body;
     
       if (!name || !email || !phone || !message) {
         return res.status(400).send({ error: "All fields are required" });
