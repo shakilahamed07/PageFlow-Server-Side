@@ -5,6 +5,7 @@ const prot = process.env.prot || 5000;
 const cors = require("cors");
 const admin = require("firebase-admin");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const nodemailer = require("nodemailer");
 
 //* middleware
 app.use(cors());
@@ -177,6 +178,42 @@ async function run() {
         res.send(result);
       } else {
         res.status(304).send({ mess: "alraday add it" });
+      }
+    });
+
+    //& contact us
+    app.post("/contact", async (req, res) => {
+      
+    
+      if (!name || !email || !phone || !message) {
+        return res.status(400).send({ error: "All fields are required" });
+      }
+    
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+    
+      try {
+        await transporter.sendMail({
+          from: email,
+          to: process.env.EMAIL_USER,
+          subject: `New Contact Message from ${name}`,
+          text: `
+            Name: ${name}
+            Email: ${email}
+            Phone: ${phone}
+            Message: ${message}
+          `,
+        });
+    
+        res.send({ success: true, message: "Message sent successfully!" });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ error: "Message failed to send" });
       }
     });
 
